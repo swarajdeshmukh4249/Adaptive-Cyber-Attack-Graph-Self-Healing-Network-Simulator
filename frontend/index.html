@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Attack Graph Simulator</title>
+    <meta name="description" content="Adaptive Cyber Attack Graph & Self-Healing Network Simulator - detect, predict, respond and recover from cyber attacks autonomously.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/lucide-static@0.516.0/font/lucide.css" rel="stylesheet">
+    <script src="https://unpkg.com/motion@11.11.17/dist/motion.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ['Inter Tight', 'Inter', 'system-ui', 'sans-serif'],
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+          },
+        },
+      };
+    </script>
+    <style type="text/tailwindcss">
+    @layer base {
+        .border-0\.75 { border-width: 0.75px; }
+        .-tracking-4 { letter-spacing: -0.04em; }
+    }
+    </style>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="cyber-bg" aria-hidden="true">
+        <div class="cyber-grid"></div>
+        <div class="cyber-orb orb-a"></div>
+        <div class="cyber-orb orb-b"></div>
+        <div class="cyber-orb orb-c"></div>
+        <div class="scanline"></div>
+    </div>
+    <div id="root">
+        <div class="boot-screen">
+            <div class="boot-ring"></div>
+            <p class="boot-text">Initialising simulator…</p>
+        </div>
+    </div>
+
+    <script type="text/babel" src="lib/utils.js"></script>
+    <script type="text/babel" src="lib/api.js"></script>
+    <script type="text/babel" src="components/ui/glowing-effect.js"></script>
+    <script type="text/babel" src="components/ui/primitives.js"></script>
+    <script type="text/babel" src="components/charts.js"></script>
+    <script type="text/babel" src="components/network3d.js"></script>
+    <script type="text/babel" src="components/header.js"></script>
+    <script type="text/babel" src="components/hero.js"></script>
+    <script type="text/babel" src="components/section-network.js"></script>
+    <script type="text/babel" src="components/section-attack-graph.js"></script>
+    <script type="text/babel" src="components/section-traffic.js"></script>
+    <script type="text/babel" src="components/section-detection.js"></script>
+    <script type="text/babel" src="components/section-response.js"></script>
+    <script type="text/babel" src="components/section-monitoring.js"></script>
+    <script type="text/babel" src="components/section-ledger.js"></script>
+    <script type="text/babel" src="components/section-dm.js"></script>
+    <script type="text/babel" src="components/section-outcomes.js"></script>
+    <script type="text/babel" src="components/landing.js"></script>
+    <script type="text/babel" src="app.js"></script>
+</body>
+</html>
