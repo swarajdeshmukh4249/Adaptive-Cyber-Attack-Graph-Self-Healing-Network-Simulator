@@ -71,7 +71,9 @@ class Handler(BaseHTTPRequestHandler):
                 _sim.launch(data.get("scenario"))
             elif path == "/api/config":
                 try:
-                    _sim.set_config(auto_heal=data.get("auto_heal"), model=data.get("model"))
+                    _sim.set_config(auto_heal=data.get("auto_heal"), model=data.get("model"),
+                                    latency=data.get("latency"), threshold=data.get("threshold"),
+                                    drift=data.get("drift"))
                 except KeyError:
                     return self._json({"error": "unknown model"}, 400)
             elif path == "/api/heal":
