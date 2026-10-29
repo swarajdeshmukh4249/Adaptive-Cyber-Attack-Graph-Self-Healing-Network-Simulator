@@ -40,6 +40,8 @@ class Host:
     pos: Tuple[float, float, float]
     status: str = "normal"  # normal | compromised | isolated | healing | attacker
     infra: bool = False      # forwarding device (traffic passes through, never a target)
+    priv: int = 0            # attacker's privilege here: 0 none, 1 user, 2 admin/root
+    standby_for: Optional[str] = None   # this host is the hot standby of another host
 
     def open_vulns(self) -> List[Vulnerability]:
         return [v for v in self.vulns if not v.patched]
@@ -57,6 +59,8 @@ class Host:
             "pos": list(self.pos),
             "status": self.status,
             "infra": self.infra,
+            "priv": self.priv,
+            "standby_for": self.standby_for,
         }
 
 
@@ -113,6 +117,9 @@ def build_default_hosts() -> Dict[str, Host]:
         Host("web", "Web Server", "server", "dmz", "10.0.1.10", 0.55, ["https", "api"], [
             _v("CVE-2021-41773", "Apache path traversal RCE", "Exploit Public-Facing App", 0.72),
         ], (-3.0, 0.0, -3.0)),
+        Host("web2", "Web Server #2", "server", "dmz", "10.0.1.11", 0.55, ["https-standby"], [
+            _v("CVE-2021-41773", "Apache path traversal RCE", "Exploit Public-Facing App", 0.72),
+        ], (-4.5, 0.6, -4.6), standby_for="web"),
         Host("mail", "Mail Server", "server", "dmz", "10.0.1.20", 0.45, ["smtp", "imap"], [
             _v("CVE-2023-23397", "Outlook NTLM leak", "Phishing", 0.66),
         ], (-3.5, 0.0, 3.0)),
@@ -134,6 +141,9 @@ def build_default_hosts() -> Dict[str, Host]:
         Host("db", "Database Server", "db", "secure", "10.0.3.20", 0.85, ["postgres"], [
             _v("CVE-2019-9193", "SQL COPY FROM PROGRAM", "Privilege Escalation", 0.58),
         ], (2.0, -1.0, -3.5)),
+        Host("db2", "DB Replica", "db", "secure", "10.0.3.21", 0.85, ["postgres-replica"], [
+            _v("CVE-2019-9193", "SQL COPY FROM PROGRAM", "Privilege Escalation", 0.58),
+        ], (2.8, -0.2, -5.2), standby_for="db"),
         Host("admin", "Admin Server", "server", "secure", "10.0.3.30", 0.9, ["ad", "ssh"], [
             _v("T1550.002", "Pass-the-Hash", "Use Alternate Auth Material", 0.6),
         ], (4.5, 0.5, -2.0)),
@@ -143,6 +153,9 @@ def build_default_hosts() -> Dict[str, Host]:
         Host("core", "Core Banking", "critical", "critical", "10.0.9.1", 1.0, ["ledger", "swift"], [
             _v("CVE-2024-CORE", "Ledger admin RCE", "Impact: Critical System", 0.5),
         ], (6.0, -3.0, -5.0)),
+        Host("core2", "Core Banking #2", "critical", "critical", "10.0.9.2", 1.0, ["ledger-standby"], [
+            _v("CVE-2024-CORE", "Ledger admin RCE", "Impact: Critical System", 0.5),
+        ], (7.2, -2.2, -6.8), standby_for="core"),
         Host("siem", "SIEM / Monitor", "monitor", "mgmt", "10.0.8.5", 0.4, ["siem", "ml"], [], (-1.0, 4.5, -2.0)),
     ]
     return {h.id: h for h in hosts}
@@ -153,6 +166,7 @@ DEFAULT_LINKS: List[Tuple[str, str]] = [
     ("internet", "firewall"),
     ("firewall", "switch"),
     ("switch", "web"),
+    ("switch", "web2"),
     ("switch", "mail"),
     ("switch", "user1"),
     ("switch", "user2"),
@@ -160,12 +174,18 @@ DEFAULT_LINKS: List[Tuple[str, str]] = [
     ("switch", "atm1"),
     ("switch", "atm2"),
     ("switch", "db"),
+    ("switch", "db2"),
     ("switch", "admin"),
     ("switch", "backup"),
     ("switch", "siem"),
     ("web", "db"),
+    ("web2", "db"),
     ("admin", "core"),
+    ("admin", "core2"),
     ("db", "core"),
+    ("db2", "core2"),
+    ("db", "db2"),
+    ("core", "core2"),
     ("db", "backup"),
 ]
 
