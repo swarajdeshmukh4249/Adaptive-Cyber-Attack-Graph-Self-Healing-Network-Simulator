@@ -13,7 +13,7 @@ import random
 import time
 from typing import Dict, List, Optional, Sequence
 
-from .traffic import FEATURES
+from .traffic import FEATURE_GROUPS, FEATURES
 
 Vec = List[float]
 
@@ -425,6 +425,12 @@ class ModelSuite:
             self.results[m.name] = res
         self.active = max(self.results.values(), key=lambda r: (r["f1"], r["auc"]))["name"]
         self.n_train, self.n_test = len(train), len(test)
+        # Per-feature median of the training set: the "uninformative" value used as
+        # the reference point when attributing a score to individual features.
+        self.baseline = [
+            sorted(col)[len(col) // 2]
+            for col in ([row[i] for row in Xtr] for i in range(len(FEATURES)))
+        ]
         self.trained = True
 
     def predict(self, flows: List[dict], model: Optional[str] = None) -> List[float]:
@@ -432,6 +438,52 @@ class ModelSuite:
             return []
         m = self.by_name(model or self.active)
         return m.predict_proba([f["x"] for f in flows], src=[f["src"] for f in flows], dst=[f["dst"] for f in flows])
+
+    def explain(self, flow: dict, model: Optional[str] = None, top: int = 3) -> dict:
+        """Why did this flow get this score?
+
+        Occlusion attribution: replace one feature at a time with its training
+        median and measure how far the score moves. A large positive drop means
+        that feature was the evidence pushing the flow toward "malicious".
+        Model-agnostic, so it works identically for the SVM, forest, boosting
+        and GNN -- which is the point: the explanation is of the decision, not
+        of one particular algorithm.
+        """
+        name = model or self.active
+        m = self.by_name(name)
+        base = getattr(self, "baseline", None)
+        x = flow["x"]
+        kw = {"src": [flow["src"]], "dst": [flow["dst"]]}
+        full = m.predict_proba([x], **kw)[0]
+        if not base:
+            return {"model": name, "score": round(full, 3), "contributions": []}
+        variants = []
+        for i in range(len(FEATURES)):
+            xi = list(x)
+            xi[i] = base[i]
+            variants.append(xi)
+        occluded = m.predict_proba(
+            variants, src=[flow["src"]] * len(variants), dst=[flow["dst"]] * len(variants)
+        )
+        contrib = []
+        for i, name_f in enumerate(FEATURES):
+            delta = full - occluded[i]
+            contrib.append({
+                "feature": name_f,
+                "group": next(g for g, fs in FEATURE_GROUPS.items() if name_f in fs),
+                "value": x[i],
+                "typical": round(base[i], 3),
+                "contribution": round(delta, 4),
+                "direction": "raises" if delta > 0 else "lowers",
+            })
+        contrib.sort(key=lambda d: -abs(d["contribution"]))
+        return {
+            "model": name,
+            "score": round(full, 3),
+            "verdict": "malicious" if full >= 0.5 else "benign",
+            "contributions": contrib[:top],
+            "all": contrib,
+        }
 
     def to_dict(self) -> dict:
         rf = self.by_name("Random Forest")
