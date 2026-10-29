@@ -8,3 +8,7 @@ node_modules/
 .venv/
 venv/
 project-proj_38oAUn23Q4H 2/
+
+# Unrelated sibling repos that ended up inside this folder
+/Adaptive-Cyber-Attack-Graph-Self-Healing-Network-Simulator/
+/EDI-1-Smart-Trekking-device/
