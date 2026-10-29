@@ -24,8 +24,13 @@ function ThreatConsoleCard({ sim, scenario, setScenario }) {
   const { state, actions } = sim;
   const active = state.campaign && state.campaign.status === 'active';
   const keys = Object.keys(state.scenarios);
+  const sv = state.services || {};
   const phrases = active
-    ? [state.output.predicted ? `Next target: ${state.output.predicted}` : 'Watching the attacker', state.output.detected ? `Isolating ${state.output.detected}` : `Stage: ${state.campaign.stage_name}`]
+    ? [
+        state.output.predicted ? `Next: ${state.output.predicted}` : 'Watching the attacker',
+        state.output.detected ? `Isolating ${state.output.detected}` : state.campaign.stage_name,
+        sv.availability != null ? `${sv.availability}% serving` : 'Self-healing active',
+      ]
     : keys.map((k) => state.scenarios[k]);
   const { text, index } = useTypewriter(phrases);
   const risk = state.output.risk_score || 0;
@@ -45,15 +50,19 @@ function ThreatConsoleCard({ sim, scenario, setScenario }) {
         <span className="text-[10px] uppercase tracking-[0.16em] text-white/40 mt-1">{active ? 'live' : 'ready'}</span>
       </div>
 
-      {/* bleeding pill input */}
-      <div className="ai-pill relative -mr-12 mt-12 mb-20 h-[86px] flex items-center pl-6 pr-4 tilt-depth">
+      {/* Pill that runs flush to the card edge. -mr-7 exactly cancels the card's
+          px-7 padding, so the flat right edge lands on the card border instead of
+          overhanging it, and the text fades out rather than being chopped mid-word. */}
+      <div className="ai-pill relative -mr-7 mt-12 mb-20 h-[86px] flex items-center pl-6 pr-5 tilt-depth overflow-hidden">
         <span className="dots-logo relative w-[44px] h-[40px] mr-3 shrink-0">
           <span style={{ width: 24, height: 24, left: 0, top: 0 }} />
           <span style={{ width: 14, height: 14, left: 26, top: 14 }} />
           <span style={{ width: 11, height: 11, left: 8, top: 27 }} />
         </span>
-        <span className="text-[28px] font-medium tracking-[-0.02em] text-white/90 whitespace-nowrap overflow-hidden">{text}</span>
-        <span className="caret-bar h-[46px]" />
+        <span className="flex-1 min-w-0 flex items-center overflow-hidden pill-fade">
+          <span className="text-[22px] font-medium tracking-[-0.02em] text-white/90 whitespace-nowrap">{text}</span>
+          <span className="caret-bar h-[38px]" />
+        </span>
       </div>
 
       <div className="text-center">
@@ -100,11 +109,13 @@ function StatsBand({ state }) {
 
 // ------------------------------------------------------------------ pipeline carousel
 const PIPELINE = [
+  ['explain', 'Read this run', 'Narration & decision trace'],
   ['network', 'Network', 'Network simulation'],
   ['attack-graph', 'Attack graph', 'Attack graph construction'],
   ['traffic', 'Traffic', 'Data collection'],
   ['detection', 'Detection', 'Detection & prediction'],
   ['response', 'Self-healing', 'Automated response'],
+  ['workload', 'Workload failover', 'Shifting work to standby servers'],
   ['monitoring', 'Monitoring', 'Continuous monitoring'],
   ['ledger', 'Ledger', 'Blockchain audit'],
   ['dm', 'DM concepts', 'Discrete mathematics'],
@@ -112,11 +123,13 @@ const PIPELINE = [
 
 function renderSlide(id, state, actions) {
   switch (id) {
+    case 'explain': return <SectionExplain state={state} />;
     case 'network': return <SectionNetwork state={state} />;
     case 'attack-graph': return <SectionAttackGraph state={state} />;
     case 'traffic': return <SectionTraffic state={state} />;
     case 'detection': return <SectionDetection state={state} actions={actions} />;
     case 'response': return <SectionResponse state={state} />;
+    case 'workload': return <SectionWorkload state={state} />;
     case 'monitoring': return <SectionMonitoring state={state} />;
     case 'ledger': return <SectionLedger state={state} actions={actions} />;
     default: return <SectionDM state={state} />;
@@ -146,7 +159,7 @@ function ExploreCarousel({ state, actions }) {
       <div ref={ref} className="reveal mx-auto max-w-[1440px] px-6 md:px-10 pt-28 pb-24">
         <div className="text-center">
           <h2 className="headline text-[44px] md:text-[56px] font-normal">Explore the pipeline</h2>
-          <p className="mt-4 text-[15px] text-neutral-600">Seven stages, one continuous self-healing loop. Every panel is live.</p>
+          <p className="mt-4 text-[15px] text-neutral-600">Start with the narration, then follow the loop stage by stage. Every panel is live.</p>
         </div>
         <div className="mt-10 flex justify-center gap-1 overflow-x-auto pb-2">
           {PIPELINE.map(([id, label], i) => (
