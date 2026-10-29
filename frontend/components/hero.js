@@ -57,6 +57,8 @@ function NodeInspector({ state, id, onClose, onHeal }) {
 function Hero({ sim, scenario, setScenario }) {
   const { state, playing, setPlaying, actions } = sim;
   const [selected, setSelected] = React.useState(null);
+  // 2D is the default: it is the readable one. 3D stays a click away.
+  const [view, setView] = React.useState('2d');
   const c = state.campaign;
   const words1 = ['A', 'network', 'that'];
   const words2 = ['heals', 'itself.'];
@@ -83,14 +85,36 @@ function Hero({ sim, scenario, setScenario }) {
           <div className="relative rounded-[14px] overflow-hidden border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,.7)] reveal in">
             <div className="flex items-center justify-between px-4 h-9 bg-[#0c0c0c] border-b border-white/10 text-[10px] uppercase tracking-[0.14em] text-white/50">
               <span>CyberHeal / live topology</span>
-              <span className="flex gap-5"><span>{c ? c.name : 'idle'}</span><span>{c ? c.status : 'no campaign'}</span><span className="mono normal-case tracking-normal">t{state.tick}</span></span>
+              <span className="flex items-center gap-5">
+                <span className="flex items-center gap-0.5 rounded-[4px] border border-white/15 p-0.5">
+                  {['2d', '3d'].map((v) => (
+                    <button
+                      key={v}
+                      onClick={() => setView(v)}
+                      className={cn('px-2 py-[3px] rounded-[3px] text-[9.5px] tracking-[0.12em] transition-colors',
+                        view === v ? 'bg-white text-black' : 'text-white/50 hover:text-white')}
+                    >{v.toUpperCase()}</button>
+                  ))}
+                </span>
+                <span>{c ? c.name : 'idle'}</span>
+                <span>{c ? c.status : 'no campaign'}</span>
+                <span className="mono normal-case tracking-normal">t{state.tick}</span>
+              </span>
             </div>
-            <Network3D state={state} height={560} selected={selected} onSelect={setSelected} />
+            {view === '2d'
+              ? <Network2D state={state} height={486} selected={selected} onSelect={setSelected} />
+              : <Network3D state={state} height={560} selected={selected} onSelect={setSelected} />}
             <div className="pointer-events-none absolute left-4 bottom-4 flex flex-wrap gap-4 text-[11px] text-white/60">
               {[['normal', 'Normal'], ['compromised', 'Compromised'], ['isolated', 'Isolated'], ['healing', 'Healing']].map(([k, l]) => (
                 <span key={k} className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS[k] }} />{l}</span>
               ))}
-              <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-red-500" />Predicted path</span>
+              <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-red-500" />Attack path</span>
+              {view === '2d' && (
+                <span className="flex items-center gap-1.5">
+                  <span className="rounded-[3px] border border-white/20 bg-white/10 px-1 text-[8px] leading-[11px]">svc</span>
+                  Workload
+                </span>
+              )}
             </div>
             {selected && (
               <div className="absolute right-4 top-12"><NodeInspector state={state} id={selected} onClose={() => setSelected(null)} onHeal={actions.heal} /></div>
@@ -103,7 +127,11 @@ function Hero({ sim, scenario, setScenario }) {
         <div className="lg:hidden mt-8 max-w-[420px] mx-auto"><ThreatConsoleCard sim={sim} scenario={scenario} setScenario={setScenario} /></div>
 
         <div className="mt-12"><ControlDock sim={sim} scenario={scenario} setScenario={setScenario} /></div>
-        <p className="mt-4 text-center text-[12px] text-white/40">Drag to orbit · hover for details · click a node to inspect it</p>
+        <p className="mt-4 text-center text-[12px] text-white/40">
+          {view === '2d'
+            ? 'Zones run left to right · dots are live traffic · service tags slide between servers on failover · click a node to inspect it'
+            : 'Drag to orbit · hover for details · click a node to inspect it'}
+        </p>
       </div>
     </section>
   );
